@@ -66,13 +66,12 @@ namespace DogGo.Repositories
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
-
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                        SELECT Id, [Name], OwnerId, Breed, Notes, ImageUrl
-                        FROM Dog
-                        WHERE Id = @id";
+                          SELECT  d.Id, d.[Name], d.OwnerId, d.Breed, d.Notes, d.ImageUrl
+                            from Dog d
+                              where d.id = @id";
 
                     cmd.Parameters.AddWithValue("@id", id);
 
@@ -80,22 +79,26 @@ namespace DogGo.Repositories
 
                     if (reader.Read())
                     {
-                        Dog dog = new Dog()
+                        Dog dog = new Dog
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             OwnerId = reader.GetInt32(reader.GetOrdinal("OwnerId")),
                             Breed = reader.GetString(reader.GetOrdinal("Breed")),
-                            Notes = reader.GetString(reader.GetOrdinal("Notes")),
-                            ImageUrl = reader.GetString(reader.GetOrdinal("ImageUrl"))
+                            Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null :
+                            reader.GetString(reader.GetOrdinal("Notes")),
+                            ImageUrl = reader.IsDBNull(reader.GetOrdinal("ImageUrl")) ? null :
+                            reader.GetString(reader.GetOrdinal("ImageUrl"))
                         };
 
                         reader.Close();
                         return dog;
                     }
-
-                    reader.Close();
-                    return null;
+                    else
+                    {
+                        reader.Close();
+                        return null;
+                    }
                 }
             }
         }
